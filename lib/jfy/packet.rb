@@ -50,8 +50,10 @@ module Jfy
 
     def inspect
       hex = @data.map { |d| "0x#{d.to_s(16)}" }.join(' ')
-      data = decode
-      format('<Jfy::Packet:0x%02x @ctrl=0x%02X @func=0x%02X @data=[%s] @hex=[%s]>', object_id, @ctrl, @func, data, hex)
+      csum = checksum.map { |d| "0x#{d.to_s(16)}" }.join(' ')
+      data = decode.encode('ASCII', :invalid => :replace, :undef => :replace)
+      format('<Jfy::Packet:0x%02x @ctrl=0x%02X @func=0x%02X @data=[%s] @hex=[%s] @csum=[%s]>',
+             object_id, @ctrl, @func, data, hex, csum)
     end
   end
 end

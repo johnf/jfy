@@ -73,7 +73,7 @@ describe Jfy::Packet do
     end
 
     it 'inspect' do
-      data = /<Jfy::Packet:0x[a-f0-9]{12} @ctrl=0x31 @func=0xBF @data=\[moo\] @hex=\[0x6d 0x6f 0x6f\]>/
+      data = /<Jfy::Packet:0x[a-f0-9]+ @ctrl=0x31 @func=0xBF @data=\[moo\] @hex=\[0x6d 0x6f 0x6f\] @csum=\[0xfc 0x76\]>/
       expect(packet.inspect).to match(data)
     end
   end
