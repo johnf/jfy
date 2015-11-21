@@ -12,11 +12,11 @@ describe Jfy::Packet do
     end
 
     it 'src' do
-      expect(packet.instance_variable_get(:@src)).to eq(0x01])
+      expect(packet.instance_variable_get(:@src)).to eq(0x01)
     end
 
     it 'dst' do
-      expect(packet.instance_variable_get(:@dst)).to eq(0x01])
+      expect(packet.instance_variable_get(:@dst)).to eq(0x01)
     end
 
     it 'ctrl' do
@@ -28,7 +28,7 @@ describe Jfy::Packet do
     end
 
     it 'data' do
-      expect(packet.instance_variable_get(:@ctrl)).to be_empty
+      expect(packet.instance_variable_get(:@data)).to be_empty
     end
 
     it 'ender' do
