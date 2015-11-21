@@ -50,7 +50,6 @@ module Jfy
       write(packet)
       packet = read
 
-      p packet.command
       fail(BadPacket, 'invalid description response') unless packet.command == Jfy::Codes::READ_DESCRIPTION_RESP
 
       packet.decode
@@ -66,22 +65,12 @@ module Jfy
       packet.decode
     end
 
-    def short(a, b)
-      ((a & 0x00ff) << 8) | (b & 0xff)
-    end
-
-    def long(a, b, c, d)
-      ((a & 0x00ff) << 24) |
-        ((b & 0x00ff) << 16) |
-        ((c & 0x00ff) << 8) |
-        (d & 0xff)
-    end
-
-    def query_normal_info
-      write(Jfy::Codes::QUERY_NORMAL_INFO)
+    def query_normal_info(serial_num)
+      packet = Jfy::Packet.new(Jfy::Codes::QUERY_NORMAL_INFO, [], :dst => serial_num)
+      write(packet)
       packet = read
 
-      fail(BadPacket, 'invalid rw description response') unless packet.command == Jfy::Codes::QUERY_NORMAL_INFO_RESP
+      fail(BadPacket, 'invalid query normal info response') unless packet.command == Jfy::Codes::QUERY_NORMAL_INFO_RESP
 
       data = packet.data
 
@@ -135,7 +124,7 @@ module Jfy
 
       if data.size > 68
         metrics.merge!(
-          :fault       => {
+          :fault => {
             :temperature => short(data[114], data[115]) / 10.0,
             :voltage     => [
               short(data[116], data[117]) / 10.0,
@@ -146,13 +135,12 @@ module Jfy
         )
       end
 
-      ap metrics
-
       metrics
     end
 
-    def query_inverter_info
-      write(Jfy::Codes::QUERY_INVERTER_INFO)
+    def query_inverter_info(serial_num)
+      packet = Jfy::Packet.new(Jfy::Codes::QUERY_INVERTER_INFO, [], :dst => serial_num)
+      write(packet)
       packet = read
 
       fail(BadPacket, 'invalid inverter info response') unless packet.command == Jfy::Codes::QUERY_INVERTER_INFO_RESP
@@ -189,62 +177,74 @@ module Jfy
     end
 
     # FIXME: Always returns a bad checksum
-    # def query_set_info
-    #   write(Jfy::Codes::QUERY_SET_INFO)
-    #   packet = read
+    def query_set_info(serial_num)
+      packet = Jfy::Packet.new(Jfy::Codes::QUERY_SET_INFO, [], :dst => serial_num)
+      write(packet)
+      packet = read
 
-    #   fail(BadPacket, 'invalid set info response') unless packet.command == Jfy::Codes::QUERY_SET_INFO_RESP
+      fail(BadPacket, 'invalid set info response') unless packet.command == Jfy::Codes::QUERY_SET_INFO_RESP
 
-    #   data = packet.data
+      data = packet.data
 
-    #   metrics = {
-    #     :pv_voltage   => {
-    #       :startup   => short(*data[0, 2]) / 10.0,
-    #       :high_stop => short(*data[4, 2]) / 10.0,
-    #       :low_stop  => short(*data[6, 2]) / 10.0,
-    #     },
-    #     :grid         => {
-    #       :voltage   => {
-    #         :min => short(*data[8, 2]) / 10.0,
-    #         :max => short(*data[10, 2]) / 10.0,
-    #       },
-    #       :frequency => {
-    #         :min => short(*data[12, 2]) / 100.0,
-    #         :max => short(*data[14, 2]) / 100.0,
-    #       },
-    #       :impedance => {
-    #         :max   => short(*data[16, 2]),
-    #         :delta => short(*data[18, 2]),
-    #       },
-    #     },
-    #     :power_max    => short(*data[20, 2]),
-    #     :power_factor => short(*data[22, 2]) / 100.0,
-    #     :connect_time => short(*data[2, 2]),
-    #   }
+      metrics = {
+        :pv_voltage   => {
+          :startup   => short(*data[0, 2]) / 10.0,
+          :high_stop => short(*data[4, 2]) / 10.0,
+          :low_stop  => short(*data[6, 2]) / 10.0,
+        },
+        :grid         => {
+          :voltage   => {
+            :min => short(*data[8, 2]) / 10.0,
+            :max => short(*data[10, 2]) / 10.0,
+          },
+          :frequency => {
+            :min => short(*data[12, 2]) / 100.0,
+            :max => short(*data[14, 2]) / 100.0,
+          },
+          :impedance => {
+            :max   => short(*data[16, 2]),
+            :delta => short(*data[18, 2]),
+          },
+        },
+        :power_max    => short(*data[20, 2]),
+        :power_factor => short(*data[22, 2]) / 100.0,
+        :connect_time => short(*data[2, 2]),
+      }
 
-    #   metrics
-    # end
+      metrics
+    end
 
     # FIXME: Always returns an error
-    # def query_time
-    #   write(Jfy::Codes::QUERY_TIME)
-    #   packet = read
-    #   p packet.command
+    def query_time(serial_num)
+      packet = Jfy::Packet.new(Jfy::Codes::QUERY_TIME, [], :dst => serial_num)
+      write(packet)
+      packet = read
 
-    #   fail(BadPacket, 'invalid time response') unless packet.command == Jfy::Codes::QUERY_TIME_RESP
+      fail(BadPacket, 'invalid time response') unless packet.command == Jfy::Codes::QUERY_TIME_RESP
 
-    #   data = packet.data
-    #   p data
+      data = packet.data
+      p data
 
-    #   {}
-    # end
+      {}
+    end
 
     private
+
+    def short(a, b)
+      ((a & 0x00ff) << 8) | (b & 0xff)
+    end
+
+    def long(a, b, c, d)
+      ((a & 0x00ff) << 24) |
+        ((b & 0x00ff) << 16) |
+        ((c & 0x00ff) << 8) |
+        (d & 0xff)
+    end
 
     def write(packet)
       p packet if @debug
 
-      p packet.packet.pack('c*').unpack('H* ') # TODO: Remove me
+      # p packet.packet.pack('c*').unpack('H* ') # TODO: Remove me
 
       @serial.syswrite(packet.to_s)
     end
@@ -291,4 +291,3 @@ module Jfy
     end
   end
 end
-
