@@ -1,0 +1,22 @@
+require: rubocop-rspec
+
+HashSyntax:
+  EnforcedStyle: hash_rockets
+
+Style/Documentation:
+  Enabled: false
+
+Style/Lambda:
+  Enabled: false
+
+Style/TrailingComma:
+  EnforcedStyleForMultiline: comma
+
+Metrics/LineLength:
+  Max: 120
+
+Style/ModuleFunction:
+  Enabled: false
+
+AlignHash:
+  EnforcedHashRocketStyle: table

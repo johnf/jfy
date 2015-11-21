@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['John Ferlito']
   spec.email         = ['johnf@inodes.org']
 
-  spec.summary       = %q{Library to speak to JFY Solar Inverters over a serial port}
+  spec.summary       = 'Library to speak to JFY Solar Inverters over a serial port'
   spec.homepage      = 'https://github.com/johnf/jfy'
   spec.license       = 'MIT'
 
@@ -20,4 +20,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'pry'
   spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'rubocop'
+  spec.add_development_dependency 'rubocop-rspec'
 end
