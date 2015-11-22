@@ -144,5 +144,47 @@ describe Jfy::Client do
       }
       expect(metrics).to eq(expected)
     end
+
+    it 'can query the set info' do
+      data = [0xA5, 0xA5, 0x01, 0x02, 0x31, 0x44, 0x00, 0xFE, 0x3E, 0x0A, 0x0D].pack('c*')
+      expect(serial_port).to receive(:syswrite).with(data)
+      # Size is +2 dues to bug in inverter
+      data = [
+        0xA5, 0xA5, 0x02, 0x01, 0x31, 0xBB, 0x20,
+        0x09, 0xC4, 0x00, 0x3C, 0x08, 0x0C, 0x0A, 0x8C, 0x3D, 0xD3, 0x08, 0x0C, 0x0A, 0x8C, 0x12, 0x8E, 0x14, 0x1E,
+        0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x0A, 0x01, 0x0E, 0x00,
+        0xF0, 0x82, 0x0A, 0x0D
+      ]
+      data.each do |byte|
+        expect(serial_port).to receive(:getbyte).and_return(byte)
+      end
+
+      metrics = client.query_set_info(0x02)
+      expected = {
+        :pv_voltage   => {
+          :startup   => 250.0,
+          :high_stop => 206.0,
+          :low_stop  => 270.0,
+        },
+        :grid         => {
+          :voltage   => {
+            :min => 1582.7,
+            :max => 206.0,
+          },
+          :frequency => {
+            :min => 27.0,
+            :max => 47.5,
+          },
+          :impedance => {
+            :max   => 5.15,
+            :delta => 3,
+          },
+        },
+        :power_factor => 0.03,
+        :connect_time => 60,
+        :power_max    => 3,
+      }
+      expect(metrics).to eq(expected)
+    end
   end
 end
