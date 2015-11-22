@@ -88,48 +88,48 @@ module Jfy
       end
 
       metrics = {
-        :temperature => short(data[0], data[1]) / 10.0,
+        :temperature => short(data, 0) / 10.0,
         :mode        => mode,
         :voltage     => [
-          short(data[2], data[3]) / 10.0,
-          short(data[4], data[5]) / 10.0,
-          short(data[6], data[7]) / 10.0,
+          short(data, 2) / 10.0,
+          short(data, 4) / 10.0,
+          short(data, 6) / 10.0,
           # FIXME: Need to test on larger inverter
-          # short(data[28], data[29]) / 10.0,
-          # short(data[30], data[31]) / 10.0,
-          # short(data[32], data[33]) / 10.0,
-          # short(data[40], data[41]) / 10.0,
-          # short(data[42], data[43]) / 10.0,
-          # short(data[44], data[45]) / 10.0,
+          # short(data, 28) / 10.0,
+          # short(data, 30) / 10.0,
+          # short(data, 32) / 10.0,
+          # short(data, 40) / 10.0,
+          # short(data, 42) / 10.0,
+          # short(data, 44) / 10.0,
         ],
         :current     => [
-          short(data[8], data[9]) / 10.0,
-          short(data[10], data[11]) / 10.0,
-          short(data[12], data[13]) / 10.0,
+          short(data, 8)  / 10.0,
+          short(data, 10) / 10.0,
+          short(data, 12) / 10.0,
           # FIXME: Need to test on larger inverter
-          # short(data[34], data[35]) / 10.0,
-          # short(data[36], data[37]) / 10.0,
-          # short(data[38], data[39]) / 10.0,
-          # short(data[46], data[47]) / 10.0,
-          # short(data[48], data[49]) / 10.0,
-          # short(data[50], data[51]) / 10.0,
+          # short(data, 34) / 10.0,
+          # short(data, 36) / 10.0,
+          # short(data, 38) / 10.0,
+          # short(data, 46) / 10.0,
+          # short(data, 48) / 10.0,
+          # short(data, 50) / 10.0,
         ],
-        :hours       => long(data[18], data[19], data[20], data[21]),
+        :hours       => long(data, 18),
         :power       => {
-          :total => long(data[14], data[15], data[16], data[17]) / 10.0 * 1_000,
-          :today => short(data[26], data[27]) / 100.0 * 1_000,
-          :now   => short(data[22], data[23]),
+          :total => long(data, 14) / 10.0 * 1_000,
+          :today => short(data, 26) / 100.0 * 1_000,
+          :now   => short(data, 22),
         },
       }
 
       if data.size > 68
         metrics.merge!(
           :fault => {
-            :temperature => short(data[114], data[115]) / 10.0,
+            :temperature => short(data, 114) / 10.0,
             :voltage     => [
-              short(data[116], data[117]) / 10.0,
-              short(data[118], data[119]) / 10.0,
-              short(data[120], data[121]) / 10.0,
+              short(data, 116) / 10.0,
+              short(data, 118) / 10.0,
+              short(data, 120) / 10.0,
             ],
           },
         )
@@ -188,27 +188,27 @@ module Jfy
 
       metrics = {
         :pv_voltage   => {
-          :startup   => short(*data[0, 2]) / 10.0,
-          :high_stop => short(*data[4, 2]) / 10.0,
-          :low_stop  => short(*data[6, 2]) / 10.0,
+          :startup   => short(data, 0) / 10.0,
+          :high_stop => short(data, 4) / 10.0,
+          :low_stop  => short(data, 6) / 10.0,
         },
         :grid         => {
           :voltage   => {
-            :min => short(*data[8, 2]) / 10.0,
-            :max => short(*data[10, 2]) / 10.0,
+            :min => short(data, 8) / 10.0,
+            :max => short(data, 10) / 10.0,
           },
           :frequency => {
-            :min => short(*data[12, 2]) / 100.0,
-            :max => short(*data[14, 2]) / 100.0,
+            :min => short(data, 12) / 100.0,
+            :max => short(data, 14) / 100.0,
           },
           :impedance => {
-            :max   => short(*data[16, 2]),
-            :delta => short(*data[18, 2]),
+            :max   => short(data, 16) / 1_000.0,
+            :delta => short(data, 18),
           },
         },
-        :power_max    => short(*data[20, 2]),
-        :power_factor => short(*data[22, 2]) / 100.0,
-        :connect_time => short(*data[2, 2]),
+        :power_max    => short(data, 20),
+        :power_factor => short(data, 22) / 100.0,
+        :connect_time => short(data, 2),
       }
 
       metrics
@@ -230,11 +230,15 @@ module Jfy
 
     private
 
-    def short(a, b)
+    def short(data, offset)
+      a, b = data[offset, 2]
+
       ((a & 0x00ff) << 8) | (b & 0xff)
     end
 
-    def long(a, b, c, d)
+    def long(data, offset)
+      a, b, c, d = data[offset, 4]
+
       ((a & 0x00ff) << 24) |
         ((b & 0x00ff) << 16) |
         ((c & 0x00ff) << 8) |
