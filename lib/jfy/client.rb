@@ -9,7 +9,7 @@ module Jfy
     def initialize(options = {})
       serial_port = options[:serial_port] || '/dev/ttyUSB0'
       baud = options[:baud] || 9600
-      @debug = options[:debug] || true # FIXME: make false
+      @debug = options[:debug] || false
 
       @serial = SerialPort.new(serial_port, :baud => baud)
 
@@ -22,7 +22,7 @@ module Jfy
       packet = Packet.new(Jfy::Codes::RE_REGISTER, [], :dst => 0x0)
       write(packet)
 
-      # sleep(1) # TODO: Should the sleep be in the library?
+      sleep(1) # TODO: Should the sleep be in the library?
     end
 
     def offline_query
