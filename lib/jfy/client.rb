@@ -22,7 +22,7 @@ module Jfy
       packet = Packet.new(Jfy::Codes::RE_REGISTER, [], :dst => 0x0)
       write(packet)
 
-      sleep(1) # TODO: Should the sleep be in the library?
+      sleep(1)
     end
 
     def offline_query
@@ -65,6 +65,7 @@ module Jfy
       packet.decode
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def query_normal_info(serial_num)
       packet = Jfy::Packet.new(Jfy::Codes::QUERY_NORMAL_INFO, [], :dst => serial_num)
       write(packet)
@@ -74,18 +75,13 @@ module Jfy
 
       data = packet.data
 
-      case [data[24], data[25]]
-      when [0x0, 0x0]
-        mode = :wait
-      when [0x0, 0x1]
-        mode = :normal
-      when [0x0, 0x2]
-        mode = :warning
-      when [0x0, 0x3]
-        mode = :error
-      else
-        fail("Unkown mode #{data[24]} #{data[25]}")
-      end
+      modes = {
+        [0x0, 0x0] => :wait,
+        [0x0, 0x1] => :normal,
+        [0x0, 0x2] => :warning,
+        [0x0, 0x3] => :error,
+      }
+      mode = modes[data[24, 2]] || fail("Unkown mode #{data[24]} #{data[25]}")
 
       metrics = {
         :temperature => short(data, 0) / 10.0,
@@ -103,7 +99,7 @@ module Jfy
           # short(data, 44) / 10.0,
         ],
         :current     => [
-          short(data, 8)  / 10.0,
+          short(data, 8) / 10.0,
           short(data, 10) / 10.0,
           short(data, 12) / 10.0,
           # FIXME: Need to test on larger inverter
@@ -137,7 +133,9 @@ module Jfy
 
       metrics
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def query_inverter_info(serial_num)
       packet = Jfy::Packet.new(Jfy::Codes::QUERY_INVERTER_INFO, [], :dst => serial_num)
       write(packet)
@@ -147,20 +145,17 @@ module Jfy
 
       data = packet.data
 
-      case data[0]
-      when 0x31
-        phases = 1
-      when 0x33
-        phases = 3
-      else
-        fail("Unknown phase mode #{data[0]}")
-      end
+      phase_types = {
+        0x31 => 1,
+        0x33 => 3,
+      }
+      phases = phase_types[data[0]] || fail("Unknown phase mode #{data[0]}")
 
-      rating = data[1, 6].pack('c*').to_i
-      version = data[7, 5].pack('c*')
-      model = data[12, 16].pack('c*').strip
-      manufacturer = data[28, 16].pack('c*').strip
-      serial = data[44, 16].pack('c*').strip
+      rating          = data[1, 6].pack('c*').to_i
+      version         = data[7, 5].pack('c*')
+      model           = data[12, 16].pack('c*').strip
+      manufacturer    = data[28, 16].pack('c*').strip
+      serial          = data[44, 16].pack('c*').strip
       nominal_voltage = data[60, 4].pack('c*').to_i / 10.0
 
       metrics = {
@@ -175,8 +170,9 @@ module Jfy
 
       metrics
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
-    # FIXME: Always returns a bad checksum
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def query_set_info(serial_num)
       packet = Jfy::Packet.new(Jfy::Codes::QUERY_SET_INFO, [], :dst => serial_num)
       write(packet)
@@ -213,20 +209,7 @@ module Jfy
 
       metrics
     end
-
-    # FIXME: Always returns an error
-    def query_time(serial_num)
-      packet = Jfy::Packet.new(Jfy::Codes::QUERY_TIME, [], :dst => serial_num)
-      write(packet)
-      packet = read
-
-      fail(BadPacket, 'invalid time response') unless packet.command == Jfy::Codes::QUERY_TIME_RESP
-
-      data = packet.data
-      p data
-
-      {}
-    end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     private
 
@@ -248,20 +231,20 @@ module Jfy
     def write(packet)
       p packet if @debug
 
-      # p packet.packet.pack('c*').unpack('H* ') # TODO: Remove me
-
       @serial.syswrite(packet.to_s)
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def read
       buffer = []
 
-      # FIXME: be smarter and read the header
       loop do
         char = @serial.getbyte
         fail(ReadTimeout) if char.nil?
 
         buffer << char
+
+        fail(BadPacket, 'invalid header') if buffer.size == 2 && buffer != [0xA5, 0xA5]
 
         break if buffer[-2, 2] == [0x0A, 0x0D]
 
@@ -291,11 +274,13 @@ module Jfy
       packet = Packet.new([ctrl, func], data, :src => src, :dst => dst)
       p packet if @debug
 
-      fail(BadPacket, 'invalid checksum') unless checksum == packet.checksum unless [ctrl, func] == Jfy::Codes::QUERY_SET_INFO_RESP
+      fail(BadPacket, 'invalid checksum') if checksum != packet.checksum &&
+                                             [ctrl, func] != Jfy::Codes::QUERY_SET_INFO_RESP
 
       fail(BadPacket, 'invalid ender') unless ender == [0x0A, 0x0D]
 
       packet
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   end
 end
