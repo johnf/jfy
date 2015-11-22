@@ -14,7 +14,9 @@ Gem::Specification.new do |spec|
   spec.license       = 'MIT'
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.bin_dir       = 'exe'
   spec.require_paths = ['lib']
+  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
 
   spec.add_dependency 'serialport'
   spec.add_dependency 'awesome_print'

@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.dirname(__FILE__) + '/lib')
+
+require 'jfy/client'
+#require 'pvoutput/pvoutput'
+require 'awesome_print'
+
+client = Jfy::Client.new
+
+retries = 0
+
+begin
+  puts 'Re Register'
+  client.re_register
+
+  puts 'Offine Query'
+  serial = client.offline_query
+rescue BadPacket, ReadTimeout => e
+  puts "Bad Packet #{e} ... Retrying" if @debug
+  puts if @debug
+  retries += 1
+  exit if retries > 5
+  retry
+end
+
+puts 'Register'
+serial_num = 0x02
+client.register(serial, serial_num)
+
+puts 'Description'
+client.description(serial_num)
+sleep(0.5)
+
+print 'RW Description: '
+desc = client.rw_description(serial_num)
+puts desc
+sleep(0.5)
+
+puts 'Inverter Info'
+data = client.query_inverter_info(serial_num)
+ap data
+sleep(0.5)
+
+puts 'Normal Info'
+data = client.query_normal_info(serial_num)
+ap data
+
+p 'Set Info'
+data = client.query_set_info(serial_num)
+ap data
