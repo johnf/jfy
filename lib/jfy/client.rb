@@ -278,6 +278,10 @@ module Jfy
       func = buffer.shift
 
       size = buffer.shift
+
+      # TODO: My unit seems to return the wrong size here (Maybe we should have an option if not all units do this)
+      size -= 2 if [ctrl, func] == Jfy::Codes::QUERY_SET_INFO_RESP
+
       data = buffer.take(size)
       buffer = buffer.drop(size)
 
@@ -287,7 +291,7 @@ module Jfy
       packet = Packet.new([ctrl, func], data, :src => src, :dst => dst)
       p packet if @debug
 
-      fail(BadPacket, 'invalid checksum') unless checksum == packet.checksum
+      fail(BadPacket, 'invalid checksum') unless checksum == packet.checksum unless [ctrl, func] == Jfy::Codes::QUERY_SET_INFO_RESP
 
       fail(BadPacket, 'invalid ender') unless ender == [0x0A, 0x0D]
 
