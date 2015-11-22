@@ -29,35 +29,29 @@ print 'Register the first array... '
 serial_num = 0x02
 client.register(serial, serial_num)
 puts 'Done.'
-sleep(0.5)
 puts
 
 print 'Description: '
 description = client.description(serial_num)
 puts description
-sleep(0.5)
 puts
 
 print 'RW Description: '
 rw_description = client.rw_description(serial_num)
 puts rw_description
-sleep(0.5)
 puts
 
 puts 'Inverter Info:'
 data = client.query_inverter_info(serial_num)
 ap data
-sleep(0.5)
 puts
 
 puts 'Normal Info:'
 data = client.query_normal_info(serial_num)
 ap data
-sleep(0.5)
 puts
 
 puts 'Set Info:'
 data = client.query_set_info(serial_num)
 ap data
-sleep(0.5)
 puts

@@ -16,13 +16,13 @@ module Jfy
       @serial.flush_output
       @serial.flush_input
       @serial.read_timeout = 1_000
+
+      @last_write = Time.now
     end
 
     def re_register
       packet = Packet.new(Jfy::Codes::RE_REGISTER, [], :dst => 0x0)
       write(packet)
-
-      sleep(1)
     end
 
     def offline_query
@@ -231,7 +231,17 @@ module Jfy
     def write(packet)
       p packet if @debug
 
+      wait
       @serial.syswrite(packet.to_s)
+      @last_write = Time.now
+    end
+
+    def wait
+      diff = Time.now - @last_write
+
+      return unless diff < 0.5
+
+      sleep(0.5 - diff)
     end
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

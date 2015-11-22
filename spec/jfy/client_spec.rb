@@ -13,6 +13,8 @@ describe Jfy::Client do
       expect(serial_port).to receive(:flush_output)
       expect(serial_port).to receive(:flush_input)
       expect(serial_port).to receive(:read_timeout=)
+
+      expect(client).to receive(:wait)
     end
 
     it 'can register an inverter' do
