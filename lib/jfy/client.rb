@@ -22,13 +22,12 @@ module Jfy
 
     def re_register
       packet = Packet.new(Jfy::Codes::RE_REGISTER, [], :dst => 0x0)
-      write(packet)
+      write(packet, :read => false)
     end
 
     def offline_query
       packet = Packet.new(Jfy::Codes::OFFLINE_QUERY, [], :dst => 0x0)
-      write(packet)
-      packet = read
+      packet = write(packet)
 
       fail(BadPacket, 'invalid offline response') unless packet.command == Jfy::Codes::REGISTER_REQUEST
 
@@ -38,8 +37,7 @@ module Jfy
     def register(serial_num, address)
       data = serial_num.unpack('c*') << address
       packet = Jfy::Packet.new(Jfy::Codes::SEND_ADDRESS, data, :dst => 0x0)
-      write(packet)
-      packet = read
+      packet = write(packet)
 
       fail(BadPacket, 'invalid send address response') unless packet.command == Jfy::Codes::ADDRESS_CONFIRM
       fail(BadPacket, 'No Ack') unless packet.ack?
@@ -47,8 +45,7 @@ module Jfy
 
     def description(serial_num)
       packet = Jfy::Packet.new(Jfy::Codes::READ_DESCRIPTION, [], :dst => serial_num)
-      write(packet)
-      packet = read
+      packet = write(packet)
 
       fail(BadPacket, 'invalid description response') unless packet.command == Jfy::Codes::READ_DESCRIPTION_RESP
 
@@ -57,8 +54,7 @@ module Jfy
 
     def rw_description(serial_num)
       packet = Jfy::Packet.new(Jfy::Codes::READ_RW_DESCRIPTION, [], :dst => serial_num)
-      write(packet)
-      packet = read
+      packet = write(packet)
 
       fail(BadPacket, 'invalid rw description response') unless packet.command == Jfy::Codes::READ_RW_DESCRIPTION_RESP
 
@@ -68,8 +64,7 @@ module Jfy
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def query_normal_info(serial_num)
       packet = Jfy::Packet.new(Jfy::Codes::QUERY_NORMAL_INFO, [], :dst => serial_num)
-      write(packet)
-      packet = read
+      packet = write(packet)
 
       fail(BadPacket, 'invalid query normal info response') unless packet.command == Jfy::Codes::QUERY_NORMAL_INFO_RESP
 
@@ -138,8 +133,7 @@ module Jfy
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def query_inverter_info(serial_num)
       packet = Jfy::Packet.new(Jfy::Codes::QUERY_INVERTER_INFO, [], :dst => serial_num)
-      write(packet)
-      packet = read
+      packet = write(packet)
 
       fail(BadPacket, 'invalid inverter info response') unless packet.command == Jfy::Codes::QUERY_INVERTER_INFO_RESP
 
@@ -175,8 +169,7 @@ module Jfy
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def query_set_info(serial_num)
       packet = Jfy::Packet.new(Jfy::Codes::QUERY_SET_INFO, [], :dst => serial_num)
-      write(packet)
-      packet = read
+      packet = write(packet)
 
       fail(BadPacket, 'invalid set info response') unless packet.command == Jfy::Codes::QUERY_SET_INFO_RESP
 
@@ -228,12 +221,14 @@ module Jfy
         (d & 0xff)
     end
 
-    def write(packet)
+    def write(packet, options = {})
       p packet if @debug
 
       wait
       @serial.syswrite(packet.to_s)
       @last_write = Time.now
+
+      read unless options[:read] == false
     end
 
     def wait
