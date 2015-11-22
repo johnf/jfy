@@ -23,7 +23,11 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Do get a one off run output from your inverter run
+
+    $ jfy
+
+It also has some sample code on how to use the API
 
 ## Development
 
