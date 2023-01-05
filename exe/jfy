@@ -5,7 +5,10 @@ $LOAD_PATH.unshift(File.dirname(__FILE__) + '/lib')
 require 'jfy/client'
 require 'awesome_print'
 
-client = Jfy::Client.new
+params = {}
+params[:serial_port] = ARGV[0] if ARGV[0]
+
+client = Jfy::Client.new params
 
 retries = 0
 
@@ -17,7 +20,7 @@ begin
   print 'Offine Query an the array... '
   serial = client.offline_query
   puts 'Done.'
-rescue BadPacket, ReadTimeout => e
+rescue Jfy::BadPacket, Jfy::ReadTimeout => e
   puts "Bad Packet #{e} ... Retrying" if @debug
   puts if @debug
   retries += 1
